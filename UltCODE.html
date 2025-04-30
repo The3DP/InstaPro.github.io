@@ -1,1 +1,174 @@
+<?php
+session_start();
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (!isset($_POST['token']) || $_POST['token'] !== $_SESSION['token']) {
+        die("Invalid request.");
+    }
+
+    // Honeypot spam check
+    if (!empty($_POST['website'])) {
+        exit;
+    }
+
+    // Sanitize input
+    $name = htmlspecialchars(strip_tags(trim($_POST['name'])));
+    $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
+    $message = htmlspecialchars(strip_tags(trim($_POST['message'])));
+    $filament_color = htmlspecialchars(strip_tags(trim($_POST['filament_color'])));
+    $timestamp = date("Y-m-d H:i:s");
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_message = "Invalid email address.";
+    } else {
+        $to = "d73928430@gmail.com";
+        $subject = "New Filament Color Order";
+        $body = "Order placed on: $timestamp\n\n" .
+                "Name: $name\n" .
+                "Email: $email\n" .
+                "Message: $message\n" .
+                "Selected Color: $filament_color\n";
+
+        $headers = "From: $name <$email>\r\n" .
+                   "Reply-To: $email\r\n" .
+                   "Content-Type: text/plain; charset=UTF-8\r\n";
+
+        file_put_contents("orders.txt", $body . "\n-----------------\n", FILE_APPEND);
+
+        $mail_sent = mail($to, $subject, $body, $headers);
+
+        // Confirmation email to user
+        $confirmation_subject = "Your Filament Order Confirmation";
+        $confirmation_message = "Hi $name,\n\nThank you for your order!\n\n" .
+                                "Message: $message\nColor: $filament_color\n\nWe'll be in touch soon.\n\n- 3D Print Team";
+        mail($email, $confirmation_subject, $confirmation_message, "From: 3D Print Shop <noreply@yourdomain.com>");
+
+        if ($mail_sent) {
+            $success_message = "Your order has been sent successfully!";
+        } else {
+            $error_message = "There was an error sending your message.";
+        }
+    }
+}
+
+// CSRF token for form
+$_SESSION['token'] = bin2hex(random_bytes(32));
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Filament Color Selection</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .color-btn {
+            display: inline-block;
+            margin: 5px 10px;
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: opacity 0.3s ease;
+        }
+        .color-btn.red { background-color: #B22222; color: white; opacity: 0.5; cursor: not-allowed; }
+        .color-btn.blue { background-color: #4169E1; color: white; }
+        .color-btn.green { background-color: #32CD32; color: white; }
+        .color-btn.black { background-color: #333; color: white; opacity: 0.5; cursor: not-allowed; }
+        .color-btn.white { background-color: #fff; color: black; border: 2px solid black; opacity: 0.5; cursor: not-allowed; }
+        input[type="radio"]:disabled { display: none; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { font-weight: bold; }
+        input[type="text"], input[type="email"], textarea {
+            width: 100%; padding: 8px; font-size: 16px;
+        }
+        input[type="submit"] {
+            background-color: #4169E1;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .message { padding: 10px; font-weight: bold; }
+        .message.success { color: green; }
+        .message.error { color: red; }
+    </style>
+    <script>
+        function validateForm() {
+            const name = document.getElementById("name").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const message = document.getElementById("message").value.trim();
+
+            if (!name || !email || !message) {
+                alert("Please fill in all required fields.");
+                return false;
+            }
+            return true;
+        }
+    </script>
+</head>
+<body>
+    <h2>Filament Color Selection</h2>
+
+    <?php if (isset($success_message)): ?>
+        <p class="message success"><?php echo $success_message; ?></p>
+    <?php elseif (isset($error_message)): ?>
+        <p class="message error"><?php echo $error_message; ?></p>
+    <?php endif; ?>
+
+    <form action="" method="post" onsubmit="return validateForm();">
+        <input type="hidden" name="token" value="<?php echo $_SESSION['token']; ?>">
+
+        <div class="form-group">
+            <label for="name">Your Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-group">
+            <label for="email">Your Email:</label>
+            <input type="email" id="email" name="email" required>
+        </div>
+
+        <div class="form-group">
+            <label for="message">Your Message:</label>
+            <textarea id="message" name="message" rows="5" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Select Your Filament Color:</label><br>
+
+            <input type="radio" id="green" name="filament_color" value="Green" required>
+            <label class="color-btn green" for="green">Green</label>
+
+            <input type="radio" id="blue" name="filament_color" value="Blue" required>
+            <label class="color-btn blue" for="blue">Blue</label>
+
+            <input type="radio" id="red" name="filament_color" value="Red" disabled>
+            <label class="color-btn red" for="red">Red</label>
+
+            <input type="radio" id="black" name="filament_color" value="Black" disabled>
+            <label class="color-btn black" for="black">Black</label>
+
+            <input type="radio" id="white" name="filament_color" value="White" disabled>
+            <label class="color-btn white" for="white">White</label>
+        </div>
+
+        <!-- Honeypot field -->
+        <div style="display:none;">
+            <label for="website">Leave this field blank</label>
+            <input type="text" name="website" id="website">
+        </div>
+
+        <input type="submit" value="Send Order">
+    </form>
+</body>
+</html>
 

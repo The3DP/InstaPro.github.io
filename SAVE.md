@@ -1,1 +1,3 @@
-Save this as order_form.php and upload to a PHP-enabled server:
+Make sure to save "UltCODE" as order_form.php,
+then upload to a PHP-enabled server.
+––––––––––––––––––––––––––

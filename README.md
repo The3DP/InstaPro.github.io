@@ -8,3 +8,4 @@ then upload to a PHP-enabled server.
 ##
 To visit InstaPrint, click on:
 ##
+>This repository is fully (100%) complete.

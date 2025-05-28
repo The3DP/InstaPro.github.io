@@ -6,7 +6,7 @@ InstaPro is a expert-level of InstaPrint.
 Make sure to save "UltCODE" as order_form.php,
 then upload to a PHP-enabled server.
 ##
-To visit InstaPrint, click on:
+To visit InstaPrint, click on: https://github.com/The3DP/InstaPrint.github.io
 ##
 Recommended Testing Sites (RTS) 
 Are sites that I test these codes on

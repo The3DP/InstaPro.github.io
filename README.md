@@ -1,3 +1,4 @@
+<p align="center"> InstaPro
 ##
 InstaPro is a expert-level of InstaPrint.
 ##

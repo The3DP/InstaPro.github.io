@@ -27,4 +27,3 @@ d73928430@gmail.com
 
 - The3DP
 ##
->This repository is fully (100%) complete.
